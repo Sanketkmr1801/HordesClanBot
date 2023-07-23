@@ -195,7 +195,6 @@ def compare_members(tag, message = None):
     for m in sorted_obj:
         print(m)
     return sorted_obj
-compare_members("Nept")
 @client.event
 async def on_ready():
   print('We have logged in as {0.user}'.format(client))
@@ -203,6 +202,9 @@ async def on_ready():
 @client.event
 async def on_message(message):
   if message.author == client.user: return
+  ae_officer_role = discord.utils.get(message.author.roles, name="Hordes Officer")
+  if ae_officer_role is None:
+      return
 
   if (message.content[0] == "!"):
     command = message.content.split(" ")[0]
