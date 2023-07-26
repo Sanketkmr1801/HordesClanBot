@@ -91,21 +91,20 @@ def get_latest_date(tag):
     latest_date = PlayerLog.select(PlayerLog.date_created).where(PlayerLog.clan == tag).order_by(PlayerLog.date_created.desc()).first()
     return latest_date
 
-def get_next_reset_date(latest_date):
-    
+def get_next_reset_date(tag):
+    latest_date = get_latest_date(tag)
     next_reset_date = None
     if latest_date:
         latest_date = latest_date.date_created
 
-        # Step 2: Extract the date from the obtained datetime
-        latest_date = latest_date.date()
-
+        print("latest date: " + date_to_string(latest_date))
         # Step 3: Calculate the next Wednesday's date
         days_until_wednesday = (2 - latest_date.weekday()) % 7
         next_wednesday_date = latest_date + datetime.timedelta(days=days_until_wednesday)
 
         # Step 4: Combine next Wednesday's date with midnight time to get the datetime
         next_reset_date = datetime.datetime.combine(next_wednesday_date, datetime.time.min)
+        print("Next reset date : " + date_to_string(next_reset_date))
 
     else:
         print("No records found for tag '-AE' in the database.")
@@ -116,11 +115,12 @@ def date_to_string(dt):
     return dt.strftime("%Y-%m-%d %H:%M:%S")
 
 async def get_member_data(tag, message):
+    print("working")
     current_date = datetime.datetime.now()
     latest_date = get_latest_date(tag)
-    next_reset_date = get_next_reset_date(latest_date)
-
-    if((not next_reset_date) or current_date > next_reset_date):
+    next_reset_date = get_next_reset_date(tag)
+    print(next_reset_date, current_date)
+    if((not next_reset_date) or current_date.date() > next_reset_date.date()):
         print("downloading new data for " + tag)
         await message.reply("downloading new data for " + tag + " on " + date_to_string(current_date))
         return download_member_data(tag)
@@ -179,7 +179,7 @@ def compare_members(tag, message = None):
     for m in latest_members:
         latest_m = latest_members[m]
         latest_prestige = latest_m["prestige"]
-        if(second_latest_members):
+        if(second_latest_members and (m in second_latest_members)):
             second_latest_m = second_latest_members[m]
         else: 
             second_latest_m = None
@@ -195,6 +195,7 @@ def compare_members(tag, message = None):
     for m in sorted_obj:
         print(m)
     return sorted_obj
+
 @client.event
 async def on_ready():
   print('We have logged in as {0.user}'.format(client))
@@ -277,5 +278,4 @@ async def on_message(message):
             await message.channel.send(result_20)
             await message.channel.send(result_rest)
 
-keep_alive()
 client.run(token=token)
